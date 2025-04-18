@@ -22,7 +22,12 @@ const RegisterService = {
         try {
             const validFilters: FilterQuery<IRegister> = Object.keys(filters).reduce((acc, key) => {
                 if (key in Register.schema.paths) {
-                    acc[key] = filters[key as keyof IRegister];
+                    const value = filters[key as keyof IRegister];
+                    if (typeof value === 'string') {
+                        acc[key] = { $regex: value, $options: 'i' }; // Case-insensitive partial match
+                    } else {
+                        acc[key] = value; // Non-string fields remain unchanged
+                    }
                 }
                 return acc;
             }, {} as FilterQuery<IRegister>);
