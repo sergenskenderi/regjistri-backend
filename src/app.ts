@@ -19,7 +19,7 @@ connectDB();
 app.use(express.json());
 
 app.use(cors({
-    origin: "http://217.76.51.97", // Allow requests from this origin
+    origin: process.env.ALLOWED_ORIGINS?.split(',') || ["http://localhost:3000"], // Allow requests from this origin
     credentials: true, // Allow cookies and credentials
 }));
 
