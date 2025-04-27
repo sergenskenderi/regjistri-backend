@@ -4,6 +4,17 @@ import {FilterQuery} from "mongoose";
 const RegisterService = {
     async createRegister(registerData: Partial<IRegister>) {
         try {
+            if (registerData.numerPersonal) {
+                // Check if a register with this numerPersonal already exists
+                const existingRegister = await Register.findOne({
+                    numerPersonal: registerData.numerPersonal,
+                    isDeleted: { $ne: true } // Exclude soft-deleted records
+                });
+
+                if (existingRegister) {
+                    throw new Error(`Ky person eshte i regjistruar ne sistem: numerPersonal`);
+                }
+            }
             const newRegister = new Register(registerData);
             return await newRegister.save();
         } catch (error) {
@@ -90,6 +101,20 @@ const RegisterService = {
 
     async updateRegister(id: string, updateData: Partial<IRegister>) {
         try {
+            // Check if numerPersonal is being updated
+            if (updateData.numerPersonal) {
+                // Find any existing register with this numerPersonal that isn't the current record
+                const existingRegister = await Register.findOne({
+                    numerPersonal: updateData.numerPersonal,
+                    _id: { $ne: id },
+                    isDeleted: { $ne: true }
+                });
+
+                if (existingRegister) {
+                    throw new Error(`Ky person eshte i regjistruar ne sistem: numerPersonal`);
+                }
+            }
+
             const updatedRegister = await Register.findByIdAndUpdate(id, updateData, { new: true });
             return updatedRegister;
         } catch (error) {

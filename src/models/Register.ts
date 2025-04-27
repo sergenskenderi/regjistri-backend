@@ -20,8 +20,8 @@ const RegisterSchema: Schema = new Schema({
    emer: { type: String, required: true },
     atesi: { type: String, required: true },
     mbiemer: { type: String, required: true },
-    numerPersonal: { type: String, required: true, unique: true },
-    datelindja: { type: Date, required: true },
+    numerPersonal: { type: String},
+    datelindja: { type: Date },
     celular: { type: String },
     referuar: { type: String },
     qarku: { type: String, required: true },
@@ -35,7 +35,7 @@ const RegisterSchema: Schema = new Schema({
 // Compound unique index for emer, atesi, and mbiemer
 RegisterSchema.index(
     { emer: 1, atesi: 1, mbiemer: 1 },
-    { unique: true, partialFilterExpression: { isDeleted: { $eq: false } } }
+    { partialFilterExpression: { isDeleted: { $eq: false } } }
 );
 
 export default mongoose.model<IRegister>('Register', RegisterSchema);
