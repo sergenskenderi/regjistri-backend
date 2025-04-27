@@ -31,28 +31,52 @@ const RegisterService = {
 
     async getAllRegisters(filters: Partial<IRegister>, page: number = 1, limit: number = 20) {
         try {
-            const validFilters: FilterQuery<IRegister> = Object.keys(filters).reduce((acc, key) => {
-                if (key in Register.schema.paths) {
+            // Initialize base filter to exclude soft-deleted items
+            const baseFilter = { isDeleted: { $ne: true } };
+
+            // Add user filters
+            const validFilters = Object.keys(filters).reduce<FilterQuery<IRegister>>((acc, key) => {
+                if (key in Register.schema.paths && filters[key as keyof IRegister] !== undefined) {
                     const value = filters[key as keyof IRegister];
-                    if (typeof value === 'string') {
-                        acc[key] = { $regex: value, $options: 'i' }; // Case-insensitive partial match
-                    } else {
-                        acc[key] = value; // Non-string fields remain unchanged
+                    if (typeof value === 'string' && value.trim() !== '') {
+                        acc = { ...acc, [key]: { $regex: value, $options: 'i' } };
+                    } else if (value !== null && value !== '') {
+                        acc = { ...acc, [key]: value };
                     }
                 }
                 return acc;
-            }, {} as FilterQuery<IRegister>);
+            }, baseFilter);
 
             const skip = (page - 1) * limit;
 
             const registers = await Register.find(validFilters)
+                .sort({ createdAt: -1 })
                 .skip(skip)
-                .limit(limit);
+                .limit(limit)
+                .lean();
 
-            const total = await Register.countDocuments(validFilters); // Total number of matching documents
+            const normalizedRegisters = registers.map(register => ({
+                _id: register._id,
+                emer: register.emer || '',
+                atesi: register.atesi || '',
+                mbiemer: register.mbiemer || '',
+                numerPersonal: register.numerPersonal || '',
+                datelindja: register.datelindja || null,
+                celular: register.celular || '',
+                referuar: register.referuar || '',
+                qarku: register.qarku || '',
+                njesia: register.njesia || 0,
+                qv: register.qv || '',
+                school: register.school || '',
+                imazh: register.imazh || '',
+                isDeleted: register.isDeleted || false,
+                __v: register.__v || 0
+            }));
+
+            const total = await Register.countDocuments(validFilters);
 
             return {
-                data: registers,
+                data: normalizedRegisters,
                 total,
                 page,
                 totalPages: Math.ceil(total / limit),
