@@ -38,7 +38,13 @@ const RegisterService = {
             const validFilters = Object.keys(filters).reduce<FilterQuery<IRegister>>((acc, key) => {
                 if (key in Register.schema.paths && filters[key as keyof IRegister] !== undefined) {
                     const value = filters[key as keyof IRegister];
-                    if (typeof value === 'string' && value.trim() !== '') {
+
+                    if (key === 'njesia' && value !== '') {
+                        const numericValue = Number(value);
+                        if (!isNaN(numericValue)) {
+                            acc = { ...acc, [key]: numericValue };
+                        }
+                    } else if (typeof value === 'string' && value.trim() !== '') {
                         acc = { ...acc, [key]: { $regex: value, $options: 'i' } };
                     } else if (value !== null && value !== '') {
                         acc = { ...acc, [key]: value };
@@ -55,7 +61,7 @@ const RegisterService = {
                 .limit(limit)
                 .lean();
 
-            const normalizedRegisters = registers.map(register => ({
+            const normalizedRegisters = registers?.map(register => ({
                 _id: register._id,
                 emer: register.emer || '',
                 atesi: register.atesi || '',
